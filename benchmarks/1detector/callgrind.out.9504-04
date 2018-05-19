@@ -1,0 +1,779 @@
+# callgrind format
+version: 1
+creator: callgrind-3.13.0
+pid: 9504
+cmd:  src/exec/allpix -c ../benchmarks/1detector.conf -l ../benchmarks/1detector.log
+part: 1
+thread: 4
+
+
+desc: I1 cache: 
+desc: D1 cache: 
+desc: LL cache: 
+
+desc: Timerange: Basic block 0 - 57903943590
+desc: Trigger: Program termination
+
+positions: line
+events: Ir
+summary: 236697
+
+
+ob=(5) /nix/store/2kcrj1ksd2a14bm5sky182fv2xwfhfap-glibc-2.26-131/lib/libpthread-2.26.so
+fl=(5) ???
+fn=(57888) __condvar_confirm_wakeup
+0 7007
+
+fn=(53756) __pthread_enable_asynccancel
+0 11011
+
+fn=(1878) _pthread_cleanup_pop
+0 5005
+
+fn=(816) pthread_mutex_lock
+0 28
+
+fn=(57886) __condvar_dec_grefs
+0 7007
+
+fn=(53860) __pthread_disable_asynccancel
+0 12012
+
+fn=(58650) __lll_lock_wait
+0 40
+
+fn=(53718) start_thread
+0 14
+cob=(2) ???
+cfi=(2) ???
+cfn=(53720) 0x000000000b715808
+calls=1 0 
+0 17
+0 15
+cob=(2)
+cfi=(2)
+cfn=(53722) 0x000000000b715768
+calls=1 0 
+0 30
+0 11
+cob=(42) /nix/store/4zd34747fz0ggzzasy4icgn3lmy89pra-gcc-7.3.0-lib/lib/libstdc++.so.6.0.24
+cfi=(42) ???
+cfn=(53724) 0x00000000000b8090
+calls=1 0 
+0 235789
+0 2
+cob=(2)
+cfi=(2)
+cfn=(59888) 0x000000000b715758
+calls=1 0 
+0 12
+0 5
+cob=(2)
+cfi=(2)
+cfn=(59892) 0x000000000b715798
+calls=1 0 
+0 750
+0 10
+cob=(2)
+cfi=(2)
+cfn=(53694) 0x000000000b7157e8
+calls=1 0 
+0 6
+0 22
+cob=(2)
+cfi=(2)
+cfn=(59908) 0x000000000b715840
+calls=1 0 
+0 6
+0 1
+
+fn=(822) pthread_mutex_unlock
+0 2
+cfn=(824) __pthread_mutex_unlock_usercnt
+calls=1 0 
+0 34
+
+fn=(824)
+0 19035
+cfn=(57892) __lll_unlock_wake
+calls=1001 0 
+0 10010
+0 3007
+
+fn=(57890) __pthread_mutex_cond_lock
+0 15021
+cfn=(58650)
+calls=2 0 
+0 40
+0 8010
+
+fn=(1848) _pthread_cleanup_push
+0 6006
+
+fn=(53754) pthread_cond_wait@@GLIBC_2.3.2
+0 25025
+cfn=(824)
+calls=1001 0 
+0 32018
+0 39039
+cfn=(1848)
+calls=1001 0 
+0 6006
+0 1001
+cfn=(53756)
+calls=1001 0 
+0 11011
+0 11011
+cfn=(53860)
+calls=1001 0 
+0 12012
+0 3003
+cfn=(1878)
+calls=1001 0 
+0 5005
+0 4004
+cfn=(57886)
+calls=1001 0 
+0 7007
+0 8008
+cfn=(57888)
+calls=1001 0 
+0 7007
+0 2002
+cfn=(57890)
+calls=1001 0 
+0 23071
+0 20020
+
+fn=(57892)
+0 10010
+
+ob=(2)
+fl=(2)
+fn=(21694) 0x0000000007215e20
+0 2
+cob=(1) /nix/store/2kcrj1ksd2a14bm5sky182fv2xwfhfap-glibc-2.26-131/lib/ld-2.26.so
+cfi=(1) ???
+cfn=(11214) __tls_get_addr
+calls=2 0 
+0 22
+
+fn=(22828) 0x0000000007215a50
+0 1
+cob=(5)
+cfi=(5)
+cfn=(822)
+calls=1 0 
+0 36
+
+fn=(59896) tcache_thread_freeres
+0 16
+cob=(3) /nix/store/2kcrj1ksd2a14bm5sky182fv2xwfhfap-glibc-2.26-131/lib/libc-2.26.so
+cfi=(3) ???
+cfn=(4900) free
+calls=1 0 
+0 97
+0 392
+cob=(3)
+cfi=(3)
+cfn=(4900)
+calls=1 0 
+0 143
+
+fn=(21690) 0x00000000072161b8
+0 1
+cob=(106) /home/tmplt/gsoc/allpix-squared/build/src/core/libAllpixCore.so
+cfi=(144) /home/tmplt/gsoc/allpix-squared/src/core/utils/log.cpp
+cfn=(21692) allpix::DefaultLogger::get_reporting_level()
+calls=1 250 
+0 18
+
+fn=(22492) 0x0000000007215ad0
+0 1
+cob=(5)
+cfi=(5)
+cfn=(816)
+calls=1 0 
+0 28
+
+fn=(42786) 0x00000000072157b8
+0 1
+cob=(42)
+cfi=(42)
+cfn=(22156) operator delete(void*, unsigned long)
+calls=1 0 
+0 1219
+
+fn=(53722)
+0 1
+cob=(3)
+cfi=(3)
+cfn=(21478) _setjmp
+calls=1 0 
+0 29
+
+fn=(59902) res_thread_freeres
+0 2
+cob=(3)
+cfi=(3)
+cfn=(59904) __resolv_context_freeres
+calls=1 0 
+0 6
+0 7
+
+fn=(53752) 0x0000000016ea7258
+0 1001
+cob=(5)
+cfi=(5)
+cfn=(53754)
+calls=1001 0 
+0 216250
+
+fn=(59906) __rpc_thread_destroy
+0 11
+
+fn=(5360) 0x0000000016ea6578
+0 1
+cob=(42)
+cfi=(42)
+cfn=(4896) operator delete(void*)
+calls=1 0 
+0 1217
+
+fn=(22282) 0x0000000007215a40
+0 1
+cob=(106)
+cfi=(144)
+cfn=(22284) allpix::DefaultLogger::setFormat(allpix::LogFormat)
+calls=1 300 
+0 25
+
+fn=(53720)
+0 1
+cob=(3)
+cfi=(3)
+cfn=(424) __ctype_init
+calls=1 0 
+0 16
+
+fn=(53738) 0x00000000072163f8
+0 1
+cob=(106)
+cfi=(597) /home/tmplt/gsoc/allpix-squared/src/core/module/ThreadPool.tpp
+cfn=(53740) allpix::ThreadPool::SafeQueue<allpix::ThreadPool::SafeQueue<std::unique_ptr<std::packaged_task<void ()>, std::default_delete<std::packaged_task<void ()> > > >*>::pop(allpix::ThreadPool::SafeQueue<std::unique_ptr<std::packaged_task<void ()>, std::default_delete<std::packaged_task<void ()> > > >*&, bool, std::function<void ()> const&)
+calls=1 23 
+0 234397
+
+fn=(59892)
+0 1
+cfn=(59894) __libc_thread_freeres
+calls=1 0 
+0 749
+
+fn=(59894)
+0 9
+cfn=(59896)
+calls=1 0 
+0 648
+0 4
+cfn=(59906)
+calls=1 0 
+0 11
+cfn=(59902)
+calls=1 0 
+0 15
+cfn=(59900) strerror_thread_freeres
+calls=1 0 
+0 15
+cfn=(59898) arena_thread_freeres
+calls=1 0 
+0 28
+0 19
+
+fn=(59898)
+0 28
+
+fn=(59900)
+0 1
+cob=(3)
+cfi=(3)
+cfn=(4900)
+calls=1 0 
+0 11
+0 3
+
+fn=(53694)
+0 1
+cob=(3)
+cfi=(3)
+cfn=(860) getpagesize
+calls=1 0 
+0 5
+
+fn=(4898) 0x0000000016ea6900
+0 1
+cob=(3)
+cfi=(3)
+cfn=(4900)
+calls=1 0 
+0 1215
+
+fn=(22272) 0x0000000007215fe8
+0 1
+cob=(106)
+cfi=(144)
+cfn=(22274) allpix::DefaultLogger::setReportingLevel(allpix::LogLevel)
+calls=1 254 
+0 25
+
+fn=(59874) 0x0000000007215ce8
+0 1
+cob=(42)
+cfi=(42)
+cfn=(59876) std::thread::_State::~_State()
+calls=1 0 
+0 1
+
+fn=(22286) 0x00000000072159e8
+0 1
+cob=(106)
+cfi=(144)
+cfn=(22288) allpix::DefaultLogger::get_format()
+calls=1 296 
+0 18
+
+fn=(53748) 0x00000000072167c0
+0 1001
+cob=(42)
+cfi=(42)
+cfn=(53750) std::condition_variable::wait(std::unique_lock<std::mutex>&)
+calls=1001 0 
+0 224258
+
+fn=(59888)
+0 1
+cob=(3)
+cfi=(3)
+cfn=(59890) __call_tls_dtors
+calls=1 0 
+0 11
+
+fn=(59908)
+0 1
+cob=(3)
+cfi=(3)
+cfn=(59910) madvise
+calls=1 0 
+0 5
+
+ob=(1)
+fl=(1)
+fn=(11214)
+0 22
+
+ob=(42)
+fl=(42)
+fn=(53750)
+0 3003
+cob=(2)
+cfi=(2)
+cfn=(53752)
+calls=1001 0 
+0 217251
+0 4004
+
+fn=(4896)
+0 1
+cob=(2)
+cfi=(2)
+cfn=(4898)
+calls=1 0 
+0 1216
+
+fn=(59876)
+0 1
+
+fn=(53724)
+0 6
+cob=(106)
+cfi=(595) /nix/store/bm7pb1s7rx1ad80706b5xqrznq7fgpgx-gcc-7.3.0/include/c++/7.3.0/thread
+cfn=(53726) std::thread::_State_impl<std::thread::_Invoker<std::tuple<void (allpix::ThreadPool::*)(std::function<void ()> const&), allpix::ThreadPool*, std::function<void ()> > > >::_M_run()
+calls=1 186 
+0 234528
+0 3
+cob=(106)
+cfi=(595)
+cfn=(59870) std::thread::_State_impl<std::thread::_Invoker<std::tuple<void (allpix::ThreadPool::*)(std::function<void ()> const&), allpix::ThreadPool*, std::function<void ()> > > >::~_State_impl()
+calls=1 178 
+0 1247
+0 5
+
+fn=(22156)
+0 1
+cob=(2)
+cfi=(2)
+cfn=(5360)
+calls=1 0 
+0 1218
+
+ob=(106)
+fl=(594) /home/tmplt/gsoc/allpix-squared/src/core/module/ThreadPool.cpp
+fn=(53730) allpix::ThreadPool::worker(std::function<void ()> const&)
+116 10
+fi=(309) /nix/store/bm7pb1s7rx1ad80706b5xqrznq7fgpgx-gcc-7.3.0/include/c++/7.3.0/bits/std_function.h
+704 2
+fe=(594)
+126 2
+fi=(309)
+706 2
+cfn=(53732) std::_Function_handler<void (), allpix::ModuleManager::run()::{lambda()#1}>::_M_invoke(std::_Any_data const&)
+calls=1 314 
+* 59
+fi=(113) /nix/store/bm7pb1s7rx1ad80706b5xqrznq7fgpgx-gcc-7.3.0/include/c++/7.3.0/bits/basic_string.h
+149 1
+fi=(309)
+695 1
+fi=(113)
+149 1
+fi=(407) /nix/store/bm7pb1s7rx1ad80706b5xqrznq7fgpgx-gcc-7.3.0/include/c++/7.3.0/bits/atomic_base.h
+396 1
+fe=(594)
+124 2
+fi=(407)
+396 1
+fe=(594)
+124 2
++2 1
+fi=(309)
+694 1
+fe=(594)
+126 5
+fi=(309)
+694 1
++1 1
+fe=(594)
+126 1
+cob=(2)
+cfi=(2)
+cfn=(53738)
+calls=1 0 
+* 234398
+* 1
+fi=(309)
+275 3
++1 4
+cfn=(59864) std::_Function_base::_Base_manager<allpix::ThreadPool::worker(std::function<void ()> const&)::{lambda()#1}>::_M_manager(std::_Any_data&, std::_Function_base::_Base_manager<allpix::ThreadPool::worker(std::function<void ()> const&)::{lambda()#1}> const&, std::_Manager_operation)
+calls=1 -61 
+* 7
+fe=(594)
+126 2
++26 11
+
+fl=(309)
+fn=(53684) std::_Function_base::_Base_manager<allpix::ModuleManager::run()::{lambda()#1}>::_M_manager(std::_Any_data&, std::_Function_base::_Base_manager<allpix::ModuleManager::run()::{lambda()#1}> const&, std::_Manager_operation)
+215 5
++20 2
+
+fn=(53732)
+314 2
+fi=(408) /home/tmplt/gsoc/allpix-squared/src/core/module/ModuleManager.cpp
+605 2
+cob=(2)
+cfi=(2)
+cfn=(22272)
+calls=1 0 
+* 26
++1 1
+fe=(309)
+318 1
+fi=(408)
+606 1
+cob=(2)
+cfi=(2)
+cfn=(22282)
+calls=1 0 
+* 26
+fe=(309)
+
+fn=(59864)
+215 5
++20 2
+
+fl=(597)
+fn=(53740)
+23 9
++2 1
+-2 3
+fi=(296) /nix/store/bm7pb1s7rx1ad80706b5xqrznq7fgpgx-gcc-7.3.0/include/c++/7.3.0/x86_64-unknown-linux-gnu/bits/gthr-default.h
+747 1
+fe=(597)
+23 3
+fi=(297) /nix/store/bm7pb1s7rx1ad80706b5xqrznq7fgpgx-gcc-7.3.0/include/c++/7.3.0/bits/std_mutex.h
+195 2
+fi=(296)
+747 2
++1 1
+cob=(2)
+cfi=(2)
+cfn=(22492)
+calls=1 0 
+* 29
+fi=(297)
+106 2
+fe=(597)
+-80 1
+fi=(297)
+268 3
+fe=(597)
+26 1
++2 2
+fi=(297)
+231 2
+fe=(597)
+42 12
+fi=(598) /nix/store/bm7pb1s7rx1ad80706b5xqrznq7fgpgx-gcc-7.3.0/include/c++/7.3.0/condition_variable
++57 2
+fi=(407)
+396 1
+fe=(597)
+28 2
+fi=(407)
+396 1001
+fe=(597)
+28 2002
++3 4
++1 2
+fi=(297)
+321 3
+fi=(296)
+777 2
++1 1
+cob=(2)
+cfi=(2)
+cfn=(22828)
+calls=1 0 
+* 37
+* 1
+fe=(597)
+28 1001
+fi=(598)
++71 2002
+cob=(2)
+cfi=(2)
+cfn=(53748)
+calls=1001 -99 
+* 225259
+fe=(597)
+-71 3003
+
+fl=(595)
+fn=(59870)
+178 5
+fi=(309)
++97 3
++1 4
+cfn=(53684)
+calls=1 -61 
+* 7
+fe=(595)
+-98 2
+cob=(2)
+cfi=(2)
+cfn=(59874)
+calls=1 0 
+* 2
+* 4
+cob=(2)
+cfi=(2)
+cfn=(42786)
+calls=1 0 
+* 1220
+
+fn=(53726)
+186 1
+fi=(253) /nix/store/bm7pb1s7rx1ad80706b5xqrznq7fgpgx-gcc-7.3.0/include/c++/7.3.0/tuple
+-26 1
+fi=(596) /nix/store/bm7pb1s7rx1ad80706b5xqrznq7fgpgx-gcc-7.3.0/include/c++/7.3.0/bits/invoke.h
+-87 6
+cfi=(594)
+cfn=(53730)
+calls=1 +43 
+* 234520
+fe=(595)
+
+fl=(144)
+fn=(21692)
+250 1
++2 2
+cob=(2)
+cfi=(2)
+cfn=(21694)
+calls=1 0 
+* 12
++1 1
+-1 1
++1 1
+
+fn=(22284)
+300 2
++1 1
+cob=(2)
+cfi=(2)
+cfn=(22286)
+calls=1 0 
+* 19
+* 1
++1 2
+
+fn=(22274)
+254 2
++1 1
+cob=(2)
+cfi=(2)
+cfn=(21690)
+calls=1 0 
+* 19
+* 1
++1 2
+
+fn=(22288)
+296 1
++2 2
+cob=(2)
+cfi=(2)
+cfn=(21694)
+calls=1 0 
+* 12
++1 1
+-1 1
++1 1
+
+ob=(3)
+fl=(3)
+fn=(860)
+0 5
+
+fn=(4900)
+0 69
+cfn=(4902) _int_free
+calls=1 0 
+0 115
+0 8
+cfn=(4902)
+calls=2 0 
+0 122
+0 15
+cfn=(832) tcache_init.part.5
+calls=1 0 
+0 1134
+0 3
+
+fn=(59904)
+0 6
+
+fn=(4902)
+0 237
+
+fn=(11504) mmap
+0 35
+
+fn=(25440) munmap
+0 10
+
+fn=(59880) arena_get2.part.3
+0 32
+cfn=(59882) new_heap
+calls=1 0 
+0 102
+0 7
+cfn=(828) malloc_init_state
+calls=1 0 
+0 646
+0 45
+cfn=(59884) detach_arena
+calls=1 0 
+0 3
+0 14
+
+fn=(59890)
+0 11
+
+fn=(424)
+0 16
+
+fn=(828)
+0 646
+
+fn=(36500) mprotect
+0 5
+
+fn=(53712) clone
+0 7
+cob=(5)
+cfi=(5)
+cfn=(53718)
+calls=1 0 
+0 236690
+
+fn=(59878) get_free_list
+0 13
+
+fn=(59882)
+0 20
+cfn=(36500)
+calls=1 0 
+0 5
+0 16
+cfn=(11504)
+calls=1 0 
+0 35
+0 10
+cfn=(25440)
+calls=1 0 
+0 5
+0 4
+cfn=(25440)
+calls=1 0 
+0 5
+0 2
+
+fn=(11908) __sigsetjmp
+0 18
+cfn=(11910) __sigjmp_save
+calls=1 0 
+0 9
+
+fn=(59884)
+0 3
+
+fn=(834) _int_malloc
+0 159
+
+fn=(21478)
+0 2
+cfn=(11908)
+calls=1 0 
+0 27
+
+fn=(832)
+0 97
+cfn=(59878)
+calls=1 0 
+0 13
+0 6
+cfn=(59880)
+calls=1 0 
+0 849
+0 4
+cfn=(834)
+calls=1 0 
+0 159
+0 6
+
+fn=(11910)
+0 9
+
+fn=(59910)
+0 5
+
+totals: 236697
