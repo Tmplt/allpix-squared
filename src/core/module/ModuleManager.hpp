@@ -147,6 +147,7 @@ namespace allpix {
         std::unique_ptr<TFile> modules_file_;
 
         std::map<Module*, long double> module_execution_time_;
+        std::map<Module*, long double> module_execution_cputime_;
         long double total_time_{};
 
         std::map<std::string, void*> loaded_libraries_;

@@ -216,6 +216,7 @@ void ModuleManager::load(Messenger* messenger,
                                << " with instance with higher priority.";
 
                     module_execution_time_.erase(iter->second->get());
+                    module_execution_cputime_.erase(iter->second->get());
                     iter->second = modules_.erase(iter->second);
                     iter = id_to_module_.erase(iter);
                 } else {
@@ -295,6 +296,7 @@ std::pair<ModuleIdentifier, Module*> ModuleManager::create_unique_modules(
 
     // Get current time
     auto start = std::chrono::steady_clock::now();
+    auto cpustart = std::clock();
     // Set the log section header
     std::string old_section_name = Log::getSection();
     std::string section_name = "C:";
@@ -310,6 +312,7 @@ std::pair<ModuleIdentifier, Module*> ModuleManager::create_unique_modules(
     // Update execution time
     auto end = std::chrono::steady_clock::now();
     module_execution_time_[module] += static_cast<std::chrono::duration<long double>>(end - start).count();
+    module_execution_cputime_[module] += (std::clock() - cpustart);
 
     // Set the module directory afterwards to catch invalid access in constructor
     module->get_configuration().set<std::string>("_output_dir", output_dir);
@@ -402,6 +405,7 @@ std::vector<std::pair<ModuleIdentifier, Module*>> ModuleManager::create_detector
         LOG(DEBUG) << "Creating detector instantiation " << instance.second.getUniqueName();
         // Get current time
         auto start = std::chrono::steady_clock::now();
+        auto cpustart = std::clock();
 
         // Create and add module instance config
         Configuration& instance_config = conf_manager_->addInstanceConfiguration(instance.second, config);
@@ -430,6 +434,7 @@ std::vector<std::pair<ModuleIdentifier, Module*>> ModuleManager::create_detector
         // Update execution time
         auto end = std::chrono::steady_clock::now();
         module_execution_time_[module] += static_cast<std::chrono::duration<long double>>(end - start).count();
+        module_execution_cputime_[module] += (std::clock() - cpustart);
 
         // Set the module directory afterwards to catch invalid access in constructor
         module->get_configuration().set<std::string>("_output_dir", output_dir);
@@ -543,6 +548,7 @@ void ModuleManager::init() {
 
         // Get current time
         auto start = std::chrono::steady_clock::now();
+        auto cpustart = std::clock();
         // Set init module section header
         std::string old_section_name = Log::getSection();
         std::string section_name = "I:";
@@ -563,6 +569,7 @@ void ModuleManager::init() {
         // Update execution time
         auto end = std::chrono::steady_clock::now();
         module_execution_time_[module.get()] += static_cast<std::chrono::duration<long double>>(end - start).count();
+        module_execution_cputime_[module.get()] += (std::clock() - cpustart);
     }
     LOG_PROGRESS(STATUS, "INIT_LOOP") << "Initialized " << modules_.size() << " module instantiations";
 }
@@ -653,6 +660,7 @@ void ModuleManager::run() {
 
                 // Get current time
                 auto start = std::chrono::steady_clock::now();
+                auto cpustart = std::clock();
                 // Set run module section header
                 std::string old_section_name = Log::getSection();
                 std::string section_name = "R:";
@@ -679,6 +687,7 @@ void ModuleManager::run() {
                 // Update execution time
                 auto end = std::chrono::steady_clock::now();
                 module_execution_time_[module] += static_cast<std::chrono::duration<long double>>(end - start).count();
+                module_execution_cputime_[module] += (std::clock() - cpustart);
             };
 
             if(module->canParallelize()) {
@@ -750,6 +759,7 @@ void ModuleManager::finalize() {
 
         // Get current time
         auto start = std::chrono::steady_clock::now();
+        auto cpustart = std::clock();
         // Set finalize module section header
         std::string old_section_name = Log::getSection();
         std::string section_name = "F:";
@@ -771,6 +781,7 @@ void ModuleManager::finalize() {
         // Update execution time
         auto end = std::chrono::steady_clock::now();
         module_execution_time_[module.get()] += static_cast<std::chrono::duration<long double>>(end - start).count();
+        module_execution_cputime_[module.get()] += (std::clock() - cpustart);
     }
     // Close module ROOT file
     modules_file_->Close();
@@ -790,6 +801,11 @@ void ModuleManager::finalize() {
     for(auto& module : modules_) {
         LOG(INFO) << " Module " << module->getUniqueName() << " took " << module_execution_time_[module.get()] << " seconds";
     }
+
+    for(auto& module : modules_) {
+        LOG(INFO) << " Module " << module->getUniqueName() << " took " << module_execution_cputime_[module.get()] / CLOCKS_PER_SEC << " seconds in CPU time";
+    }
+
 
     Configuration& global_config = conf_manager_->getGlobalConfiguration();
     long double processing_time = 0;
