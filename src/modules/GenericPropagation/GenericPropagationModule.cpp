@@ -518,6 +518,8 @@ void GenericPropagationModule::run(unsigned int event_num) {
     // Create vector of propagated charges to output
     std::vector<PropagatedCharge> propagated_charges;
 
+    auto start = std::chrono::steady_clock::now();
+
     // Loop over all deposits for propagation
     LOG(TRACE) << "Propagating charges in sensor";
     unsigned int propagated_charges_count = 0;
@@ -607,6 +609,9 @@ void GenericPropagationModule::run(unsigned int event_num) {
 
     // Dispatch the message with propagated charges
     messenger_->dispatchMessage(event_num, this, propagated_charge_message);
+
+    auto end = std::chrono::steady_clock::now();
+    LOG(INFO) << "Finished execution in " << static_cast<std::chrono::duration<long double, std::milli>>(end - start).count() << "ms";
 }
 
 /**
