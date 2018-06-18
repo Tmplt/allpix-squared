@@ -13,11 +13,17 @@ using namespace allpix;
 /**
  * The threads are created in an exception-safe way and all of them will be destroyed when creation of one fails
  */
-ThreadPool::ThreadPool(unsigned int num_threads, std::function<void()> worker_init_function) {
+ThreadPool::ThreadPool(unsigned int num_threads, std::function<void()> worker_init_function)
+    : worker_init_function_(worker_init_function) {
     // Create threads
     try {
         for(unsigned int i = 0u; i < num_threads; ++i) {
-            threads_.emplace_back(&ThreadPool::worker, this, worker_init_function);
+            TThread* thread = new TThread("worker thread", &ThreadPool::worker, static_cast<void*>(this));
+            int retval = thread->Run();
+            if(retval != 0) {
+                throw RuntimeError(std::string("TThread failed to start with error code: ") + std::to_string(retval));
+            }
+            threads_.push_back(thread);
         }
     } catch(...) {
         destroy();
@@ -116,14 +122,15 @@ void ThreadPool::wait() {
 /**
  * If an exception is thrown by a module, the first exception is saved to propagate in the main thread
  */
-void ThreadPool::worker(const std::function<void()>& init_function) {
+void ThreadPool::worker(void* arg) {
     // Initialize the worker
-    init_function();
+    auto master = static_cast<ThreadPool*>(arg);
+    master->worker_init_function_();
 
-    while(!done_) {
+    while(!master->done_) {
         Task task{nullptr};
 
-        if(event_queue_.pop(task, true)) {
+        if(master->event_queue_.pop(task, true)) {
             // Try to run the task
             try {
                 // Execute task
@@ -132,11 +139,11 @@ void ThreadPool::worker(const std::function<void()>& init_function) {
                 task->get_future().get();
             } catch(...) {
                 // Check if the first exception thrown
-                if(has_exception_.test_and_set()) {
+                if(master->has_exception_.test_and_set()) {
                     // Save the first exceptin
-                    exception_ptr_ = std::current_exception();
+                    master->exception_ptr_ = std::current_exception();
                     // Invalidate the queue to terminate other threads
-                    event_queue_.invalidate();
+                    master->event_queue_.invalidate();
                 }
             }
         }
@@ -148,8 +155,7 @@ void ThreadPool::destroy() {
     event_queue_.invalidate();
 
     for(auto& thread : threads_) {
-        if(thread.joinable()) {
-            thread.join();
-        }
+        thread->Join();
+        thread->Delete();
     }
 }

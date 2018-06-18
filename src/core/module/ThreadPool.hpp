@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include <iostream>
+#include <TThread.h>
 
 namespace allpix {
     class Module;
@@ -140,7 +140,7 @@ namespace allpix {
          * @brief Constantly running internal function each thread uses to acquire work items from the queue.
          * @param init_function Function to initialize the relevant thread_local variables
          */
-        void worker(const std::function<void()>& init_function);
+        static void worker(void* arg);
 
         /**
          * @brief Invalidate all queues and joins all running threads when the pool is destroyed.
@@ -156,7 +156,9 @@ namespace allpix {
         std::atomic<unsigned int> run_cnt_;
         mutable std::mutex run_mutex_;
         std::condition_variable run_condition_;
-        std::vector<std::thread> threads_;
+        std::vector<TThread*> threads_;
+
+        std::function<void()> worker_init_function_;
 
         std::atomic_flag has_exception_;
         std::exception_ptr exception_ptr_{nullptr};
