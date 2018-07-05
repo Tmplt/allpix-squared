@@ -16,7 +16,8 @@
 #include "G4Track.hh"
 #include "TrackInfoG4.hpp"
 
-#include "core/messenger/Messenger.hpp"
+#include "core/module/MessageStorage.hpp"
+#include "core/module/Module.hpp"
 #include "objects/MCTrack.hpp"
 
 namespace allpix {
@@ -67,10 +68,11 @@ namespace allpix {
 
         /**
          * @brief Dispatch the stored tracks as a MCTrackMessage
+         * @param event_num Event identifier the message originates from
          * @param module The module which is responsible for dispatching the message
          * @param messenger The messenger used to dispatch it
          */
-        void dispatchMessage(Module* module, Messenger* messenger);
+        void dispatchMessage(MessageStorage& messages);
 
         /**
          * @brief Populate the #stored_tracks_ with MCTrack objects

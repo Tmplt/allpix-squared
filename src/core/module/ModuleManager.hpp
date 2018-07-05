@@ -21,11 +21,12 @@
 #include <TFile.h>
 
 #include "Module.hpp"
-#include "ThreadPool.hpp"
 #include "core/config/Configuration.hpp"
 #include "core/utils/log.h"
 
 namespace allpix {
+
+    using ModuleList = std::list<std::shared_ptr<Module>>;
 
     class ConfigManager;
     class Messenger;
@@ -43,6 +44,8 @@ namespace allpix {
      * - Finalizing the modules
      */
     class ModuleManager {
+        friend class Event;
+
     public:
         /**
          * @brief Construct manager
@@ -88,7 +91,7 @@ namespace allpix {
          * @brief Run all modules for the number of events
          * @warning Should be called after the \ref ModuleManager::init "init function"
          */
-        void run();
+        void run(Messenger* messenger);
 
         /**
          * @brief Finalize all modules after the event sequence
@@ -130,13 +133,12 @@ namespace allpix {
         /**
          * @brief Set module specific log setting before running init/run/finalize
          */
-        std::tuple<LogLevel, LogFormat> set_module_before(const std::string& mod_name, const Configuration& config);
+        static std::tuple<LogLevel, LogFormat> set_module_before(const std::string& mod_name, const Configuration& config);
         /**
          * @brief Reset global log setting after running init/run/finalize
          */
-        void set_module_after(std::tuple<LogLevel, LogFormat> prev);
+        static void set_module_after(std::tuple<LogLevel, LogFormat> prev);
 
-        using ModuleList = std::list<std::unique_ptr<Module>>;
         using IdentifierToModuleMap = std::map<ModuleIdentifier, ModuleList::iterator>;
 
         ModuleList modules_;

@@ -1,20 +1,4 @@
 namespace allpix {
-    template <typename Func, typename... Args> auto ThreadPool::submit(Module* module, Func&& func, Args&&... args) {
-        // Bind the arguments to the tasks
-        auto bound_task = std::bind(std::forward<Func>(func), std::forward<Args>(args)...);
-
-        // Construct packaged task with correct return type
-        using PackagedTask = std::packaged_task<decltype(bound_task())()>;
-        PackagedTask task(bound_task);
-
-        // Get future and wrapper to add to vector
-        auto future = task.get_future();
-        auto task_function = [task = std::move(task)]() mutable { task(); };
-        task_queues_.at(module).push(std::make_unique<std::packaged_task<void()>>(std::move(task_function)));
-        all_queue_.push(&task_queues_.at(module));
-        return future;
-    }
-
     template <typename T> ThreadPool::SafeQueue<T>::~SafeQueue() { invalidate(); }
 
     /*
@@ -23,7 +7,7 @@ namespace allpix {
     template <typename T> bool ThreadPool::SafeQueue<T>::pop(T& out, bool wait, const std::function<void()>& func) {
         // Lock the mutex
         std::unique_lock<std::mutex> lock{mutex_};
-        if(wait) {
+        if(queue_.empty() && wait) {
             // Wait for new item in the queue (unlocks the mutex while waiting)
             condition_.wait(lock, [this]() { return !queue_.empty() || !valid_; });
         }

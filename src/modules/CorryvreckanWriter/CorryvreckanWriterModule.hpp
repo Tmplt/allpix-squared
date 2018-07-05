@@ -12,6 +12,7 @@
 #include "core/config/Configuration.hpp"
 #include "core/geometry/GeometryManager.hpp"
 #include "core/messenger/Messenger.hpp"
+#include "core/module/MessageStorage.hpp"
 #include "core/module/Module.hpp"
 
 // Local includes
@@ -50,7 +51,7 @@ namespace allpix {
         /**
          * @brief Take the digitised pixel hits and write them into the output file
          */
-        void run(unsigned int) override;
+        void run(unsigned int, MessageStorage&) override;
 
         /**
          * @brief Write output trees to file

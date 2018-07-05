@@ -19,6 +19,7 @@
 #include <cassert>
 #include <memory>
 #include <typeinfo>
+#include <utility>
 
 #include "Message.hpp"
 #include "core/geometry/Detector.hpp"
@@ -27,6 +28,13 @@
 // TODO [doc] This should partly move to a source file
 
 namespace allpix {
+    // TODO [doc] Document this
+    class DelegateTypes {
+    public:
+        std::shared_ptr<BaseMessage> single;
+        std::vector<std::shared_ptr<BaseMessage>> multi;
+    };
+
     /**
      * @ingroup Delegates
      * @brief Flags to change the behaviour of delegates
@@ -76,7 +84,7 @@ namespace allpix {
          * @brief Construct a delegate with the supplied flags
          * @param flags Configuration flags
          */
-        explicit BaseDelegate(MsgFlags flags) : processed_(false), flags_(flags) {}
+        explicit BaseDelegate(MsgFlags flags) : flags_(flags) {}
         /**
          * @brief Essential virtual destructor
          */
@@ -94,8 +102,8 @@ namespace allpix {
         /**
          * @brief Enable default move behaviour
          */
-        BaseDelegate(BaseDelegate&&) noexcept = default;
-        BaseDelegate& operator=(BaseDelegate&&) noexcept = default;
+        BaseDelegate(BaseDelegate&&) = default;
+        BaseDelegate& operator=(BaseDelegate&&) = default;
         /// @}
 
         /**
@@ -109,7 +117,9 @@ namespace allpix {
             if((getFlags() & MsgFlags::REQUIRED) == MsgFlags::NONE) {
                 return true;
             }
-            return processed_;
+
+            /* return processed_; */
+            return false;
         }
 
         /**
@@ -131,11 +141,12 @@ namespace allpix {
         virtual std::string getUniqueName() = 0;
 
         /**
-         * @brief Process a message and forwards it to its final destination
+         * @brief Process a message and forward it to its final destination
          * @param msg Message to process
          * @param name Name of the message
+         * @param dest Destination of the message
          */
-        virtual void process(std::shared_ptr<BaseMessage> msg, std::string name) = 0;
+        virtual void process(std::shared_ptr<BaseMessage> msg, std::string name, DelegateTypes& dest) = 0;
 
         /**
          * @brief Reset the delegate and set it not satisfied again
@@ -202,7 +213,7 @@ namespace allpix {
          * @brief Stores the received message in the delegate until the end of the event
          * @param msg Message to store
          */
-        void process(std::shared_ptr<BaseMessage> msg, std::string) override {
+        void process(std::shared_ptr<BaseMessage> msg, std::string, DelegateTypes&) override {
             // Store the message and mark as processed
             messages_.push_back(msg);
             this->set_processed();
@@ -246,7 +257,7 @@ namespace allpix {
          * @warning The listener function is called directly from the delegate, no heavy processing should be done in the
          *          listener function
          */
-        void process(std::shared_ptr<BaseMessage> msg, std::string) override {
+        void process(std::shared_ptr<BaseMessage> msg, std::string, DelegateTypes&) override {
 #ifndef NDEBUG
             // The type names should have been correctly resolved earlier
             const BaseMessage* inst = msg.get();
@@ -286,7 +297,7 @@ namespace allpix {
          * @warning The listener function is called directly from the delegate, no heavy processing should be done in the
          *          listener function
          */
-        void process(std::shared_ptr<BaseMessage> msg, std::string name) override {
+        void process(std::shared_ptr<BaseMessage> msg, std::string name, DelegateTypes&) override {
             // Pass the message and mark as processed
             (this->obj_->*method_)(std::static_pointer_cast<BaseMessage>(msg), name);
             this->set_processed();
@@ -315,24 +326,25 @@ namespace allpix {
         /**
          * @brief Saves the message to the bound message pointer
          * @param msg Message to process
+         * @param dest Message destination
          * @throws UnexpectedMessageException If this delegate has already received the message after the previous reset (not
          *         thrown if the \ref MsgFlags::ALLOW_OVERWRITE "ALLOW_OVERWRITE" flag is passed)
          *
          * The saved value is overwritten if the \ref MsgFlags::ALLOW_OVERWRITE "ALLOW_OVERWRITE" flag is enabled.
          */
-        void process(std::shared_ptr<BaseMessage> msg, std::string) override {
+        void process(std::shared_ptr<BaseMessage> msg, std::string, DelegateTypes& dest) override {
 #ifndef NDEBUG
             // The type names should have been correctly resolved earlier
             const BaseMessage* inst = msg.get();
             assert(typeid(*inst) == typeid(R));
 #endif
             // Raise an error if the message is overwritten (unless it is allowed)
-            if(this->obj_->*member_ != nullptr && (this->getFlags() & MsgFlags::ALLOW_OVERWRITE) == MsgFlags::NONE) {
+            if(dest.single != nullptr && (this->getFlags() & MsgFlags::ALLOW_OVERWRITE) == MsgFlags::NONE) {
                 throw UnexpectedMessageException(this->obj_->getUniqueName(), typeid(R));
             }
 
             // Set the message and mark as processed
-            this->obj_->*member_ = std::static_pointer_cast<R>(msg);
+            dest.single = std::static_pointer_cast<R>(msg);
             this->set_processed();
         }
 
@@ -372,15 +384,16 @@ namespace allpix {
         /**
          * @brief Adds the message to the bound vector
          * @param msg Message to process
+         * @param dest Message destination
          */
-        void process(std::shared_ptr<BaseMessage> msg, std::string) override {
+        void process(std::shared_ptr<BaseMessage> msg, std::string, DelegateTypes& dest) override {
 #ifndef NDEBUG
             // The type names should have been correctly resolved earlier
             const BaseMessage* inst = msg.get();
             assert(typeid(*inst) == typeid(R));
 #endif
             // Add the message
-            (this->obj_->*member_).push_back(std::static_pointer_cast<R>(msg));
+            dest.multi.push_back(std::static_pointer_cast<R>(msg));
             this->set_processed();
         }
 

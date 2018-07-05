@@ -213,7 +213,7 @@ void DepositionGeant4Module::init() {
 
         // Get model of the sensitive device
         auto sensitive_detector_action =
-            new SensitiveDetectorActionG4(this, detector, messenger_, track_info_manager_.get(), charge_creation_energy);
+            new SensitiveDetectorActionG4(detector, track_info_manager_.get(), charge_creation_energy);
         auto logical_volume = detector->getExternalObject<G4LogicalVolume>("sensor_log");
         if(logical_volume == nullptr) {
             throw ModuleError("Detector " + detector->getName() + " has no sensitive device (broken Geant4 geometry)");
@@ -266,7 +266,7 @@ void DepositionGeant4Module::init() {
     RELEASE_STREAM(G4cout);
 }
 
-void DepositionGeant4Module::run(unsigned int event_num) {
+void DepositionGeant4Module::run(unsigned int event_num, MessageStorage& messages) {
     // Suppress output stream if not in debugging mode
     IFLOG(DEBUG);
     else {
@@ -285,7 +285,7 @@ void DepositionGeant4Module::run(unsigned int event_num) {
 
     // Dispatch the necessary messages
     for(auto& sensor : sensors_) {
-        sensor->dispatchMessages();
+        sensor->dispatchMessages(messages);
 
         // Fill output plots if requested:
         if(config_.get<bool>("output_plots")) {
@@ -294,7 +294,7 @@ void DepositionGeant4Module::run(unsigned int event_num) {
         }
     }
 
-    track_info_manager_->dispatchMessage(this, messenger_);
+    track_info_manager_->dispatchMessage(messages);
     track_info_manager_->resetTrackInfoManager();
 }
 

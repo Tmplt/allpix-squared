@@ -78,7 +78,8 @@ void ProjectionPropagationModule::init() {
     }
 }
 
-void ProjectionPropagationModule::run(unsigned int) {
+void ProjectionPropagationModule::run(unsigned int, MessageStorage& messages) {
+    auto deposits_message = messages.fetchMessage<DepositedChargeMessage>();
 
     // Create vector of propagated charges to output
     std::vector<PropagatedCharge> propagated_charges;
@@ -89,7 +90,7 @@ void ProjectionPropagationModule::run(unsigned int) {
     double total_projected_charge = 0;
 
     // Loop over all deposits for propagation
-    for(auto& deposit : deposits_message_->getData()) {
+    for(auto& deposit : deposits_message->getData()) {
 
         auto position = deposit.getLocalPosition();
         auto type = deposit.getType();
@@ -209,7 +210,7 @@ void ProjectionPropagationModule::run(unsigned int) {
     auto propagated_charge_message = std::make_shared<PropagatedChargeMessage>(std::move(propagated_charges), detector_);
 
     // Dispatch the message with propagated charges
-    messenger_->dispatchMessage(this, propagated_charge_message);
+    messages.dispatchMessage(propagated_charge_message);
 }
 
 void ProjectionPropagationModule::finalize() {

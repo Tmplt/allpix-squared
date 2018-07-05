@@ -17,6 +17,8 @@
 
 #include "core/geometry/Detector.hpp"
 #include "core/messenger/Messenger.hpp"
+#include "core/module/MessageStorage.hpp"
+#include "core/module/Module.hpp"
 
 #include "objects/DepositedCharge.hpp"
 #include "objects/MCParticle.hpp"
@@ -31,14 +33,11 @@ namespace allpix {
     public:
         /**
          * @brief Constructs the action handling for every sensitive detector
-         * @param module Pointer to the DepositionGeant4 module holding this class
          * @param detector Detector this sensitive device is bound to
          * @param msg Pointer to the messenger to send the charge deposits
          * @param charge_creation_energy Energy needed per deposited charge
          */
-        SensitiveDetectorActionG4(Module* module,
-                                  const std::shared_ptr<Detector>& detector,
-                                  Messenger* msg,
+        SensitiveDetectorActionG4(const std::shared_ptr<Detector>& detector,
                                   TrackInfoManager* track_info_manager,
                                   double charge_creation_energy);
 
@@ -68,14 +67,12 @@ namespace allpix {
 
         /**
          * @brief Send the MCParticle and DepositedCharge messages
+         * @param event_num Event from which the messages are dispatched from
          */
-        void dispatchMessages();
+        void dispatchMessages(MessageStorage& messages);
 
     private:
-        // Instantatiation of the deposition module
-        Module* module_;
         std::shared_ptr<Detector> detector_;
-        Messenger* messenger_;
         // Pointer to track info manager to register tracks which pass through sensitive detectors
         TrackInfoManager* track_info_manager_;
 

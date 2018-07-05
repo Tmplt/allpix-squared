@@ -15,6 +15,7 @@
 #include "core/config/Configuration.hpp"
 #include "core/geometry/GeometryManager.hpp"
 #include "core/messenger/Messenger.hpp"
+#include "core/module/MessageStorage.hpp"
 #include "core/module/Module.hpp"
 
 #include "objects/Pixel.hpp"
@@ -44,7 +45,7 @@ namespace allpix {
         /**
          * @brief Transfer the propagated charges to the pixels
          */
-        void run(unsigned int) override;
+        void run(unsigned int, MessageStorage&) override;
 
         /**
          * @brief Display statistical summary
@@ -52,7 +53,6 @@ namespace allpix {
         void finalize() override;
 
     private:
-        Messenger* messenger_;
         std::shared_ptr<Detector> detector_;
         std::shared_ptr<DetectorModel> model_;
 

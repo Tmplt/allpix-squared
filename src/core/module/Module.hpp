@@ -27,6 +27,7 @@
 
 namespace allpix {
     class Messenger;
+    class MessageStorage;
     /**
      * @defgroup Modules Modules
      * @brief Collection of modules included in the framework
@@ -44,8 +45,10 @@ namespace allpix {
      * used by the ModuleManager and the Messenger to work.
      */
     class Module {
+        friend class Event;
         friend class ModuleManager;
         friend class Messenger;
+        friend class MessageStorage;
 
     public:
         /**
@@ -112,11 +115,6 @@ namespace allpix {
         uint64_t getRandomSeed();
 
         /**
-         * @brief Get thread pool to submit asynchronous tasks to
-         */
-        ThreadPool& getThreadPool();
-
-        /**
          * @brief Get ROOT directory which should be used to output histograms et cetera
          * @return ROOT directory for storage
          */
@@ -141,6 +139,8 @@ namespace allpix {
          */
         virtual void init() {}
 
+        using DispatchFunc = std::function<void(Module*, std::shared_ptr<BaseMessage>, const std::string&)>;
+
         /**
          * @brief Execute the function of the module for every event
          * @param event_num Number of the event in the event sequence (starts at 1)
@@ -148,7 +148,11 @@ namespace allpix {
          * Does nothing if not overloaded.
          */
         // TODO [doc] Start the sequence at 0 instead of 1?
-        virtual void run(unsigned int event_num) { (void)event_num; }
+        // TODO [doc] Document all new parameters
+        virtual void run(unsigned int event_num, MessageStorage& messages) {
+            (void)event_num;
+            (void)messages;
+        }
         //
         /**
          * @brief Finalize the module after the event sequence
@@ -183,13 +187,6 @@ namespace allpix {
          */
         ModuleIdentifier get_identifier() const;
         ModuleIdentifier identifier_;
-
-        /**
-         * @brief Set the thread pool for parallel execution
-         * @return Thread pool (or null pointer to disable it)
-         */
-        void set_thread_pool(std::shared_ptr<ThreadPool> thread_pool);
-        std::shared_ptr<ThreadPool> thread_pool_;
 
         /**
          * @brief Set the output ROOT directory for this module
@@ -227,6 +224,7 @@ namespace allpix {
         std::shared_ptr<Detector> detector_;
 
         bool parallelize_{false};
+        std::mutex run_mutex_;
     };
 
 } // namespace allpix

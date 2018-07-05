@@ -23,7 +23,7 @@ using namespace allpix;
 DefaultDigitizerModule::DefaultDigitizerModule(Configuration& config,
                                                Messenger* messenger,
                                                std::shared_ptr<Detector> detector)
-    : Module(config, std::move(detector)), messenger_(messenger), pixel_message_(nullptr) {
+    : Module(config, std::move(detector)), messenger_(messenger) {
     // Enable parallelization of this module if multithreading is enabled
     enable_parallelization();
 
@@ -97,10 +97,12 @@ void DefaultDigitizerModule::init() {
     }
 }
 
-void DefaultDigitizerModule::run(unsigned int) {
+void DefaultDigitizerModule::run(unsigned int, MessageStorage& messages) {
+    auto pixel_message = messages.fetchMessage<PixelChargeMessage>();
+
     // Loop through all pixels with charges
     std::vector<PixelHit> hits;
-    for(auto& pixel_charge : pixel_message_->getData()) {
+    for(auto& pixel_charge : pixel_message->getData()) {
         auto pixel = pixel_charge.getPixel();
         auto pixel_index = pixel.getIndex();
         auto charge = static_cast<double>(pixel_charge.getCharge());
@@ -195,7 +197,7 @@ void DefaultDigitizerModule::run(unsigned int) {
     if(!hits.empty()) {
         // Create and dispatch hit message
         auto hits_message = std::make_shared<PixelHitMessage>(std::move(hits), getDetector());
-        messenger_->dispatchMessage(this, hits_message);
+        messages.dispatchMessage(hits_message);
     }
 }
 

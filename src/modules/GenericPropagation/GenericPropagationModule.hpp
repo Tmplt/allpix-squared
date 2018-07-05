@@ -19,6 +19,7 @@
 #include "core/config/Configuration.hpp"
 #include "core/geometry/DetectorModel.hpp"
 #include "core/messenger/Messenger.hpp"
+#include "core/module/MessageStorage.hpp"
 #include "core/module/Module.hpp"
 
 #include "objects/DepositedCharge.hpp"
@@ -53,7 +54,7 @@ namespace allpix {
         /**
          * @brief Propagate all deposited charges through the sensor
          */
-        void run(unsigned int event_num) override;
+        void run(unsigned int event_num, MessageStorage&) override;
 
         /**
          * @brief Write statistical summary

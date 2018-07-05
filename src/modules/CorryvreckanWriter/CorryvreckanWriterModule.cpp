@@ -87,10 +87,11 @@ void CorryvreckanWriterModule::init() {
 }
 
 // Make instantiations of Corryvreckan pixels, and store these in the trees during run time
-void CorryvreckanWriterModule::run(unsigned int) {
+void CorryvreckanWriterModule::run(unsigned int, MessageStorage& messages) {
+    auto pixel_messages = messages.fetchMultiMessage<PixelHitMessage>();
 
     // Loop through all receieved messages
-    for(auto& message : pixel_messages_) {
+    for(auto& message : pixel_messages) {
 
         auto detectorID = message->getDetector()->getName();
         auto objectID = detectorID + "_pixels";

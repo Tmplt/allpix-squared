@@ -16,6 +16,7 @@
 #include "core/config/Configuration.hpp"
 #include "core/geometry/DetectorModel.hpp"
 #include "core/messenger/Messenger.hpp"
+#include "core/module/MessageStorage.hpp"
 #include "core/module/Module.hpp"
 
 #include "objects/DepositedCharge.hpp"
@@ -48,7 +49,7 @@ namespace allpix {
         /**
          * @brief Projection of the electrons to the surface
          */
-        void run(unsigned int) override;
+        void run(unsigned int, MessageStorage&) override;
 
         /**
          * @brief Write plots if needed

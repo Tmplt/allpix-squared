@@ -22,6 +22,8 @@
 
 namespace allpix {
 
+    using DelegateMap = std::map<std::type_index, std::map<std::string, std::list<std::shared_ptr<BaseDelegate>>>>;
+
     /**
      * @ingroup Managers
      * @brief Manager responsible for sending messages between objects
@@ -31,6 +33,8 @@ namespace allpix {
      */
     class Messenger {
         friend class Module;
+        friend class Event;
+        friend class MessageStorage;
 
     public:
         /**
@@ -107,21 +111,6 @@ namespace allpix {
          */
         bool hasReceiver(Module* source, const std::shared_ptr<BaseMessage>& message);
 
-        /**
-         * @brief Dispatches a message
-         * @param source Module dispatching the message
-         * @param message Pointer to the message to dispatch
-         * @param name Optional message name (defaults to - indicating that it should dispatch to the module output
-         * parameter)
-         */
-        template <typename T>
-        void dispatchMessage(Module* source, std::shared_ptr<T> message, const std::string& name = "-");
-
-        /**
-         * @brief Removes the list of sent messages, clearing them from memory if not otherwise used
-         */
-        inline void clearMessages() { sent_messages_.clear(); }
-
     private:
         /**
          * @brief Add a delegate to the listeners
@@ -129,7 +118,7 @@ namespace allpix {
          * @param module Module linked to the delegate
          * @param delegate Delegate that listens to the message
          */
-        void add_delegate(const std::type_info& message_type, Module* module, std::unique_ptr<BaseDelegate> delegate);
+        void add_delegate(const std::type_info& message_type, Module* module, const std::shared_ptr<BaseDelegate>& delegate);
 
         /**
          * @brief Removes a delegate from the listeners
@@ -138,30 +127,9 @@ namespace allpix {
          */
         void remove_delegate(BaseDelegate* delegate);
 
-        /**
-         * @brief Dispatch base message to the specific and general delegates
-         * @param source Dispatching module
-         * @param message Message to dispatch
-         * @param name Message name (- indicates to use module output parameter)
-         */
-        void dispatch_message(Module* source, const std::shared_ptr<BaseMessage>& message, std::string name);
-
-        /**
-         * @brief Dispatch base message to the exact delegates
-         * @param source Dispatching module
-         * @param message Message to dispatch
-         * @param name Name of the message
-         * @param id Identifier to dispatch to (either the name or '*' to dispatch to all)
-         */
-        bool dispatch_message(Module* source,
-                              const std::shared_ptr<BaseMessage>& message,
-                              const std::string& name,
-                              const std::string& id);
-
-        using DelegateMap = std::map<std::type_index, std::map<std::string, std::list<std::unique_ptr<BaseDelegate>>>>;
         using DelegateIteratorMap =
             std::map<BaseDelegate*,
-                     std::tuple<std::type_index, std::string, std::list<std::unique_ptr<BaseDelegate>>::iterator>>;
+                     std::tuple<std::type_index, std::string, std::list<std::shared_ptr<BaseDelegate>>::iterator>>;
 
         DelegateMap delegates_;
         DelegateIteratorMap delegate_to_iterator_;

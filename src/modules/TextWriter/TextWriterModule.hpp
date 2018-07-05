@@ -14,6 +14,7 @@
 #include "core/config/Configuration.hpp"
 #include "core/geometry/GeometryManager.hpp"
 #include "core/messenger/Messenger.hpp"
+#include "core/module/MessageStorage.hpp"
 #include "core/module/Module.hpp"
 
 namespace allpix {
@@ -52,7 +53,7 @@ namespace allpix {
         /**
          * @brief Writes the objects fetched to their specific tree, constructing trees on the fly for new objects.
          */
-        void run(unsigned int) override;
+        void run(unsigned int, MessageStorage&) override;
 
         /**
          * @brief Add the main configuration and the detector setup to the data file and write it, also write statistics

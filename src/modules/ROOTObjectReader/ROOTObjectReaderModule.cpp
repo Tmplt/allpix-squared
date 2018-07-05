@@ -29,8 +29,8 @@
 
 using namespace allpix;
 
-ROOTObjectReaderModule::ROOTObjectReaderModule(Configuration& config, Messenger* messenger, GeometryManager* geo_mgr)
-    : Module(config), messenger_(messenger), geo_mgr_(geo_mgr) {}
+ROOTObjectReaderModule::ROOTObjectReaderModule(Configuration& config, Messenger*, GeometryManager* geo_mgr)
+    : Module(config), geo_mgr_(geo_mgr) {}
 
 /**
  * @note Objects cannot be stored in smart pointers due to internal ROOT logic
@@ -219,7 +219,7 @@ void ROOTObjectReaderModule::init() {
     }
 }
 
-void ROOTObjectReaderModule::run(unsigned int event_num) {
+void ROOTObjectReaderModule::run(unsigned int event_num, MessageStorage& messages) {
     --event_num;
     for(auto& tree : trees_) {
         if(event_num >= tree->GetEntries()) {
@@ -255,7 +255,7 @@ void ROOTObjectReaderModule::run(unsigned int event_num) {
         std::shared_ptr<BaseMessage> message = iter->second(*objects, message_inf.detector);
 
         // Dispatch the message
-        messenger_->dispatchMessage(this, message, message_inf.name);
+        messages.dispatchMessage(message, message_inf.name);
     }
 }
 

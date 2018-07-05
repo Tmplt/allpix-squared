@@ -7,6 +7,8 @@ ADD_LIBRARY(AllpixCore SHARED
     utils/text.cpp
     utils/unit.cpp
     module/Module.cpp
+    module/Event.cpp
+    module/MessageStorage.cpp
     module/ModuleManager.cpp
     module/ThreadPool.cpp
     messenger/Messenger.cpp

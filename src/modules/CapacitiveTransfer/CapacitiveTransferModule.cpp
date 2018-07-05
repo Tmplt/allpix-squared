@@ -262,13 +262,14 @@ void CapacitiveTransferModule::init() {
     }
 }
 
-void CapacitiveTransferModule::run(unsigned int) {
+void CapacitiveTransferModule::run(unsigned int, MessageStorage& messages) {
+    auto propagated_message = messages.fetchMessage<PropagatedChargeMessage>();
 
     // Find corresponding pixels for all propagated charges
     LOG(TRACE) << "Transferring charges to pixels";
     unsigned int transferred_charges_count = 0;
     std::map<Pixel::Index, std::pair<double, std::vector<const PropagatedCharge*>>, pixel_cmp> pixel_map;
-    for(auto& propagated_charge : propagated_message_->getData()) {
+    for(auto& propagated_charge : propagated_message->getData()) {
         auto position = propagated_charge.getLocalPosition();
         // Ignore if outside depth range of implant
         if(std::fabs(position.z() - (model_->getSensorCenter().z() + model_->getSensorSize().z() / 2.0)) >
@@ -368,7 +369,7 @@ void CapacitiveTransferModule::run(unsigned int) {
 
     // Dispatch message of pixel charges
     auto pixel_message = std::make_shared<PixelChargeMessage>(pixel_charges, detector_);
-    messenger_->dispatchMessage(this, pixel_message);
+    messages.dispatchMessage(pixel_message);
 }
 
 void CapacitiveTransferModule::finalize() {

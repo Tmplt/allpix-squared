@@ -16,6 +16,7 @@
 
 #include "core/config/Configuration.hpp"
 #include "core/messenger/Messenger.hpp"
+#include "core/module/MessageStorage.hpp"
 #include "core/module/Module.hpp"
 
 #include "objects/PixelCharge.hpp"
@@ -51,7 +52,7 @@ namespace allpix {
         /**
          * @brief Simulate digitization process
          */
-        void run(unsigned int) override;
+        void run(unsigned int, MessageStorage&) override;
 
         /**
          * @brief Finalize and write optional histograms

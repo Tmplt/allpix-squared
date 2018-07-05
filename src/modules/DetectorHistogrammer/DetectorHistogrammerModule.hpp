@@ -21,6 +21,7 @@
 #include "core/config/Configuration.hpp"
 #include "core/geometry/GeometryManager.hpp"
 #include "core/messenger/Messenger.hpp"
+#include "core/module/MessageStorage.hpp"
 #include "core/module/Module.hpp"
 
 #include "Cluster.hpp"
@@ -51,7 +52,7 @@ namespace allpix {
         /**
          * @brief Fill the histograms
          */
-        void run(unsigned int) override;
+        void run(unsigned int, MessageStorage&) override;
 
         /**
          * @brief Write the histograms to the modules file
@@ -62,7 +63,7 @@ namespace allpix {
         /**
          * @brief Perform a sparse clustering on the PixelHits
          */
-        std::vector<Cluster> doClustering();
+        std::vector<Cluster> doClustering(std::shared_ptr<PixelHitMessage>& pixels_message);
 
         std::shared_ptr<Detector> detector_;
 

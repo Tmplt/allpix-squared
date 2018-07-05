@@ -28,7 +28,7 @@
 using namespace allpix;
 
 SimpleTransferModule::SimpleTransferModule(Configuration& config, Messenger* messenger, std::shared_ptr<Detector> detector)
-    : Module(config, detector), messenger_(messenger), detector_(std::move(detector)) {
+    : Module(config, detector), detector_(std::move(detector)) {
     // Enable parallelization of this module if multithreading is enabled
     enable_parallelization();
 
@@ -42,12 +42,14 @@ SimpleTransferModule::SimpleTransferModule(Configuration& config, Messenger* mes
     messenger->bindSingle(this, &SimpleTransferModule::propagated_message_, MsgFlags::REQUIRED);
 }
 
-void SimpleTransferModule::run(unsigned int) {
+void SimpleTransferModule::run(unsigned int, MessageStorage& messages) {
+    auto propagated_message = messages.fetchMessage<PropagatedChargeMessage>();
+
     // Find corresponding pixels for all propagated charges
     LOG(TRACE) << "Transferring charges to pixels";
     unsigned int transferred_charges_count = 0;
     std::map<Pixel::Index, std::vector<const PropagatedCharge*>, pixel_cmp> pixel_map;
-    for(auto& propagated_charge : propagated_message_->getData()) {
+    for(auto& propagated_charge : propagated_message->getData()) {
         auto position = propagated_charge.getLocalPosition();
         // Ignore if outside depth range of implant
         // FIXME This logic should be improved
@@ -106,7 +108,7 @@ void SimpleTransferModule::run(unsigned int) {
 
     // Dispatch message of pixel charges
     auto pixel_message = std::make_shared<PixelChargeMessage>(pixel_charges, detector_);
-    messenger_->dispatchMessage(this, pixel_message);
+    messages.dispatchMessage(pixel_message);
 }
 
 void SimpleTransferModule::finalize() {

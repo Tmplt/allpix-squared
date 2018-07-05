@@ -513,7 +513,8 @@ void GenericPropagationModule::init() {
     }
 }
 
-void GenericPropagationModule::run(unsigned int event_num) {
+void GenericPropagationModule::run(unsigned int event_num, MessageStorage& messages) {
+    auto deposits_message = messages.fetchMessage<DepositedChargeMessage>();
 
     // Create vector of propagated charges to output
     std::vector<PropagatedCharge> propagated_charges;
@@ -523,7 +524,7 @@ void GenericPropagationModule::run(unsigned int event_num) {
     unsigned int propagated_charges_count = 0;
     unsigned int step_count = 0;
     long double total_time = 0;
-    for(auto& deposit : deposits_message_->getData()) {
+    for(auto& deposit : deposits_message->getData()) {
 
         if((deposit.getType() == CarrierType::ELECTRON && !config_.get<bool>("propagate_electrons")) ||
            (deposit.getType() == CarrierType::HOLE && !config_.get<bool>("propagate_holes"))) {
@@ -606,7 +607,7 @@ void GenericPropagationModule::run(unsigned int event_num) {
     auto propagated_charge_message = std::make_shared<PropagatedChargeMessage>(std::move(propagated_charges), detector_);
 
     // Dispatch the message with propagated charges
-    messenger_->dispatchMessage(this, propagated_charge_message);
+    messages.dispatchMessage(propagated_charge_message);
 }
 
 /**

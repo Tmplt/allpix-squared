@@ -16,6 +16,7 @@
 #include "core/config/Configuration.hpp"
 #include "core/geometry/GeometryManager.hpp"
 #include "core/messenger/Messenger.hpp"
+#include "core/module/MessageStorage.hpp"
 #include "core/module/Module.hpp"
 
 #include "SensitiveDetectorActionG4.hpp"
@@ -54,7 +55,7 @@ namespace allpix {
         /**
          * @brief Deposit charges for a single event
          */
-        void run(unsigned int) override;
+        void run(unsigned int, MessageStorage&) override;
 
         /**
          * @brief Display statistical summary

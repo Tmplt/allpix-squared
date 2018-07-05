@@ -9,6 +9,7 @@
  */
 
 #include "ModuleManager.hpp"
+#include "Event.hpp"
 
 #include <dlfcn.h>
 #include <unistd.h>
@@ -23,7 +24,6 @@
 #include <stdexcept>
 #include <string>
 
-#include <TProcessID.h>
 #include <TSystem.h>
 
 #include "core/config/ConfigManager.hpp"
@@ -556,7 +556,10 @@ void ModuleManager::init() {
         module->init();
         // Reset delegates
         LOG(TRACE) << "Resetting messages";
-        module->reset_delegates();
+
+        // XXX: omitted original code!
+        /* module->reset_delegates(); */
+
         // Reset logging
         Log::setSection(old_section_name);
         set_module_after(old_settings);
@@ -568,12 +571,9 @@ void ModuleManager::init() {
 }
 
 /**
- * Initializes the thread pool for excuting multiple modules and module tasks in parallel. The run for a module is skipped if
- * its delegates are not \ref Module::check_delegates() "satisfied". Sets the section header and logging settings before
- * executing the \ref Module::run() function. \ref Module::reset_delegates() "Resets" the delegates and the logging after
- * initialization
+ * Initializes the thread pool for executing each event in parallel
  */
-void ModuleManager::run() {
+void ModuleManager::run(Messenger* messenger) {
     Configuration& global_config = conf_manager_->getGlobalConfiguration();
 
     global_config.setDefault("experimental_multithreading", false);
@@ -594,10 +594,6 @@ void ModuleManager::run() {
 
     // Creates the thread pool
     LOG(DEBUG) << "Initializing thread pool with " << threads_num << " additional thread(s)";
-    std::vector<Module*> module_list;
-    for(auto& module : modules_) {
-        module_list.emplace_back(module.get());
-    }
     // clang-format off
     auto init_function = [log_level = Log::getReportingLevel(), log_format = Log::getFormat()]() {
         // clang-format on
@@ -605,116 +601,61 @@ void ModuleManager::run() {
         Log::setReportingLevel(log_level);
         Log::setFormat(log_format);
     };
-    std::shared_ptr<ThreadPool> thread_pool = std::make_shared<ThreadPool>(threads_num, module_list, init_function);
-    for(auto& module : modules_) {
-        module->set_thread_pool(thread_pool);
-    }
+    std::shared_ptr<ThreadPool> thread_pool = std::make_unique<ThreadPool>(threads_num, init_function);
 
-    // Loop over all the events
+    std::atomic<unsigned int> run_events{0};
+    auto premature_exit_function = [&]() {
+        if(terminate_) {
+            LOG(INFO) << "Interrupting prematurely because of request";
+            thread_pool->destroy();
+            global_config.set<unsigned int>("number_of_events", run_events);
+        }
+
+        return terminate_.load();
+    };
+
+    // Push all events to the thread pool
     auto start_time = std::chrono::steady_clock::now();
     global_config.setDefault<unsigned int>("number_of_events", 1u);
     auto number_of_events = global_config.get<unsigned int>("number_of_events");
-    for(unsigned int i = 0; i < number_of_events; ++i) {
-        // Check for termination
-        if(terminate_) {
-            LOG(INFO) << "Interrupting event loop after " << i << " events because of request to terminate";
-            number_of_events = i;
-            global_config.set<unsigned int>("number_of_events", i);
+    LOG(STATUS) << "Initializing events...";
+    for(unsigned int i = 1; i <= number_of_events; ++i) {
+        // Create the event and submit it to the thread pool
+        // TODO: clean up the forwarding of parameters. Can some be omitted?
+        Event event(modules_, i, terminate_, module_execution_time_, messenger);
+        // Event initialization must be run on the main thread
+        event.init();
+        auto event_function = [ e = std::move(event), number_of_events, &run_events ]() mutable {
+            e.run(number_of_events);
+            ++run_events;
+        };
+        thread_pool->submit_event_function(std::move(event_function));
+
+        // Check for premature exception/termination
+        thread_pool->check_exception();
+        if(premature_exit_function()) {
             break;
         }
-
-        LOG_PROGRESS(STATUS, "EVENT_LOOP") << "Running event " << (i + 1) << " of " << number_of_events;
-
-        // Get object count for linking objects in current event
-        auto save_id = TProcessID::GetObjectCount();
-
-        std::string module_name;
-        if(!modules_.empty()) {
-            module_name = modules_.front()->get_identifier().getName();
-        }
-        for(auto& module : modules_) {
-            // Execute all remaining jobs in the thread pool when switching to a new module type
-            if(module->get_identifier().getName() != module_name) {
-                module_name = module->get_identifier().getName();
-                thread_pool->execute_all();
-            }
-
-            // clang-format off
-            auto execute_module = [module = module.get(), event_num = i + 1, this, number_of_events]() {
-                // clang-format on
-                LOG_PROGRESS(TRACE, "EVENT_LOOP") << "Running event " << event_num << " of " << number_of_events << " ["
-                                                  << module->get_identifier().getUniqueName() << "]";
-                // Check if module is satisfied to run
-                if(!module->check_delegates()) {
-                    LOG(TRACE) << "Not all required messages are received for " << module->get_identifier().getUniqueName()
-                               << ", skipping module!";
-                    return;
-                }
-
-                // Get current time
-                auto start = std::chrono::steady_clock::now();
-                // Set run module section header
-                std::string old_section_name = Log::getSection();
-                std::string section_name = "R:";
-                section_name += module->get_identifier().getUniqueName();
-                Log::setSection(section_name);
-                // Set module specific settings
-                auto old_settings = set_module_before(module->get_identifier().getUniqueName(), module->get_configuration());
-                // Change to ROOT directory is not thread safe, only do this for module without parallelization support
-                if(!module->canParallelize()) {
-                    // DEPRECATED: Switching to the directory should be removed, but can break current modules
-                    module->getROOTDirectory()->cd();
-                }
-                // Run module
-                try {
-                    module->run(event_num);
-                } catch(EndOfRunException& e) {
-                    // Terminate if the module threw the EndOfRun request exception:
-                    LOG(WARNING) << "Request to terminate:" << std::endl << e.what();
-                    terminate_ = true;
-                }
-                // Reset logging
-                Log::setSection(old_section_name);
-                set_module_after(old_settings);
-                // Update execution time
-                auto end = std::chrono::steady_clock::now();
-                module_execution_time_[module] += static_cast<std::chrono::duration<long double>>(end - start).count();
-            };
-
-            if(module->canParallelize()) {
-                // Submit the module function
-                thread_pool->submit_module_function(execute_module);
-            } else {
-                // Finish thread pool
-                thread_pool->execute_all();
-                // Execute current module
-                execute_module();
-            }
-        }
-
-        // Finish executing the last remaining tasks
-        thread_pool->execute_all();
-
-        // Resetting delegates
-        for(auto& module : modules_) {
-            LOG(TRACE) << "Resetting messages";
-            module->reset_delegates();
-        }
-
-        // Reset object count for next event
-        TProcessID::SetObjectCount(save_id);
     }
-    LOG_PROGRESS(STATUS, "EVENT_LOOP") << "Finished run of " << number_of_events << " events";
+
+    LOG(STATUS) << "All events have been initialized";
+
+    // Execute all remaining events
+    while(thread_pool->execute_one()) {
+        thread_pool->check_exception();
+        if(premature_exit_function()) {
+            break;
+        }
+    }
+
+    // Check exception for last event
+    thread_pool->check_exception();
+
+    LOG_PROGRESS(STATUS, "EVENT_LOOP") << "Finished run of " << run_events << " events";
     auto end_time = std::chrono::steady_clock::now();
     total_time_ += static_cast<std::chrono::duration<long double>>(end_time - start_time).count();
 
-    // Remove pool from modules, wait for the threads to finish and destroy pool
     LOG(TRACE) << "Destroying thread pool";
-    for(auto& module : modules_) {
-        module->set_thread_pool(nullptr);
-    }
-    thread_pool.reset();
-    assert(thread_pool.use_count() == 0);
 }
 
 static std::string seconds_to_time(long double seconds) {
