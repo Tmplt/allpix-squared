@@ -2,10 +2,7 @@ namespace allpix {
     template <typename T>
     void Messenger::dispatchMessage(Module* source, std::shared_ptr<T> message, const std::string& name) {
         static_assert(std::is_base_of<BaseMessage, T>::value, "Dispatched message should inherit from Message class");
-        auto start = std::chrono::steady_clock::now();
         dispatch_message(source, std::static_pointer_cast<BaseMessage>(message), name);
-        auto end = std::chrono::steady_clock::now();
-        LOG(INFO) << "Dispatched message in " << static_cast<std::chrono::duration<long double, std::micro>>(end - start).count() << "μs";
     }
 
     template <typename T>
