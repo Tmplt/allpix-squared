@@ -47,13 +47,14 @@ function ms_diff {
   echo $(( (sec_diff * 1000) + (nano_diff / 1000000) ))
 }
 
+# XXX: does not work for concurrent events
 function extract_event_times {
   # Extract the timestamp from each started event, and the last finished event.
   # Resulting array will be number_of_events + 1
   pattern="s/^.*|\s*\(\S*\)|.*$/\1/p"
   readarray -t timestamps <<< $(grep -e 'Running event' -e 'Finished run' "$log" | sed -n $pattern)
 
-  # Calculate how many milliseconds each event required
+  # Calculate how many milliseconds each event took
   for idx in "${!timestamps[@]}"; do
     if (( idx >= ${#timestamps[@]} - 1 )); then break; fi
     ms_diff "${timestamps[idx + 1]}" "${timestamps[idx]}"
@@ -62,12 +63,13 @@ function extract_event_times {
 
 # Calulcates all arguments with bc and prints result as a float with prefix 0 and six significant digits
 function _bc {
-  echo $(echo "$@" | bc -l | awk '{printf "%.6g", $0}')
+  echo "$@" | bc -l | awk '{printf "%.6f", $0}'
 }
 
 function extract_avg_module_times {
   # Extract lines containing module names and the time it took to run them
-  readarray -t entries <<< $(grep -e 'Module \S* took' "$log" | awk '{print $4 " " $6}')
+  readarray -t entries <<< $(grep -e 'Module \S* took' "$log" |
+    awk '{printf "%s %.6f\n", $4, $6}')
 
   # First, print out times for global modules; these need not be averaged.
   for entry in "${entries[@]}"; do
@@ -92,7 +94,7 @@ function extract_avg_module_times {
 
   # Print the module averages
   for key in "${!module_times[@]}"; do
-    echo $key $(_bc "${module_times[$key]} / $detector_count")
+    echo $key $(_bc "${module_times[$key]} / ${detector_count}")
   done
 }
 
