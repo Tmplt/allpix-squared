@@ -514,6 +514,7 @@ void GenericPropagationModule::init() {
 }
 
 void GenericPropagationModule::run(unsigned int event_num, MessageStorage& messages) {
+    auto start = std::chrono::steady_clock::now();
     auto deposits_message = messages.fetchMessage<DepositedChargeMessage>();
 
     // Create vector of propagated charges to output
@@ -608,6 +609,9 @@ void GenericPropagationModule::run(unsigned int event_num, MessageStorage& messa
 
     // Dispatch the message with propagated charges
     messages.dispatchMessage(propagated_charge_message);
+
+    auto end = std::chrono::steady_clock::now();
+    LOG(INFO) << "Finished execution in " << static_cast<std::chrono::duration<long double, std::milli>>(end - start).count() << "ms";
 }
 
 /**
