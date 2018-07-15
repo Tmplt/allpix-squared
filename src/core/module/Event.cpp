@@ -28,18 +28,46 @@ Event::Event(ModuleList modules,
              std::atomic<bool>& terminate,
              std::map<Module*, long double>& module_execution_time,
              Messenger* messenger,
-             std::mt19937_64& seeder)
+             std::mt19937_64& seeder,
+             IOLock& reader_lock,
+             IOLock& writer_lock)
     : number(event_num), modules_(std::move(modules)), message_storage_(messenger->delegates_), terminate_(terminate),
-      module_execution_time_(module_execution_time) {
+      module_execution_time_(module_execution_time), reader_lock_(reader_lock), writer_lock_(writer_lock) {
     random_generator_.seed(seeder());
 }
 
-void Event::run_module(std::shared_ptr<Module>& module) {
-    auto lock =
-        !module->canParallelize() ? std::unique_lock<std::mutex>(module->run_mutex_) : std::unique_lock<std::mutex>();
+bool Event::handle_iomodule(const std::shared_ptr<Module>& module) {
+    const bool reader = dynamic_cast<ReaderModule*>(module.get()), writer = dynamic_cast<WriterModule*>(module.get());
+    if(previous_was_reader_ && !reader) {
+        // All readers have been run, notify other threads
+        reader_lock_.current_event++;
+        reader_lock_.condition.notify_all();
+    }
+    previous_was_reader_ = reader;
 
-    LOG_PROGRESS(TRACE, "EVENT_LOOP") << "Running event " << this->number << " ["
-                                      << module->get_identifier().getUniqueName() << "]";
+    if(!reader && !writer) {
+        // Module doesn't require IO; nothing else to do
+        return false;
+    }
+    LOG(TRACE) << module->getUniqueName() << " is a " << (reader ? "reader" : "writer") << "; running in order of event number";
+
+    // Acquire reader/writer lock
+    auto& typelock = reader ? reader_lock_ : writer_lock_;
+    auto lock = std::unique_lock<std::mutex>(typelock.mutex);
+    typelock.condition.wait(lock, [this, &typelock]() { return this->number == typelock.current_event.load(); });
+
+    return true;
+}
+
+void Event::run(std::shared_ptr<Module>& module) {
+    // Modules that read/write files must be run in order of event number
+    bool io_module = handle_iomodule(module);
+
+    auto lock = (!module->canParallelize() || io_module) ? std::unique_lock<std::mutex>(module->run_mutex_)
+                                                         : std::unique_lock<std::mutex>();
+
+    LOG_PROGRESS(TRACE, "EVENT_LOOP") << "Running event " << this->number << " [" << module->get_identifier().getUniqueName()
+                                      << "]";
 
     // Check if module is satisfied to run
     if(!message_storage_.is_satisfied(module.get())) {
@@ -98,7 +126,7 @@ void Event::init() {
             break;
         }
 
-        run_module(module);
+        run(module);
 
         modules_.pop_front();
     }
@@ -118,7 +146,7 @@ void Event::run() {
     /* auto save_id = TProcessID::GetObjectCount(); */
 
     for(auto& module : modules_) {
-        run_module(module);
+        run(module);
     }
 
     // Resetting delegates
@@ -132,6 +160,11 @@ void Event::run() {
 
     // Reset object count for next event
     /* TProcessID::SetObjectCount(save_id); */
+
+    // Notify other events that all writers for this event are done.
+    // Writers are always at the end of an event, hence the incremention here.
+    writer_lock_.current_event++;
+    writer_lock_.condition.notify_all();
 }
 
 void Event::finalize() {

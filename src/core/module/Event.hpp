@@ -17,6 +17,12 @@
 #include "../messenger/Messenger.hpp"
 
 namespace allpix {
+    struct IOLock {
+        std::mutex mutex;
+        std::condition_variable condition;
+        std::atomic<unsigned int> current_event{1};
+    };
+
     class Event {
         friend class ModuleManager;
 
@@ -56,13 +62,17 @@ namespace allpix {
          * @param terminate TODO
          * @param module_execution_time TODO
          * @param seeder TODO
+         * @param io_mutex TODO
+         * @param io_condition TODO
          */
         explicit Event(ModuleList modules,
                        const unsigned int event_num,
                        std::atomic<bool>& terminate,
                        std::map<Module*, long double>& module_execution_time,
                        Messenger* messenger,
-                       std::mt19937_64& seeder);
+                       std::mt19937_64& seeder,
+                       IOLock& reader_lock,
+                       IOLock& writer_lock);
         /**
          * @brief Use default destructor
          */
@@ -92,14 +102,15 @@ namespace allpix {
          * @warning Should be called after the \ref Event::init "init function"
          */
         void run();
+        void run(std::shared_ptr<Module>& module);
+
+        bool handle_iomodule(const std::shared_ptr<Module>& module);
 
         /**
          * @brief Finalize the event
          * @warning Should be called after the \ref Event::run "run function"
          */
         void finalize();
-
-        void run_module(std::shared_ptr<Module>& module);
 
         ModuleList modules_;
         MessageStorage message_storage_;
@@ -111,6 +122,11 @@ namespace allpix {
         std::map<Module*, long double>& module_execution_time_;
 
         std::mt19937_64 random_generator_;
+
+        // For Readers/Writers execution
+        IOLock& reader_lock_;
+        IOLock& writer_lock_;
+        bool previous_was_reader_{false};
     };
 
 } // namespace allpix
