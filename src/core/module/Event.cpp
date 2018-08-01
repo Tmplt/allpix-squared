@@ -23,6 +23,8 @@
 using namespace allpix;
 
 std::mutex Event::stats_mutex_;
+std::mutex Event::buffer_mutex_;
+volatile size_t Event::buffer_size;
 Event::IOOrderLock Event::reader_lock_;
 Event::IOOrderLock Event::writer_lock_;
 
@@ -35,9 +37,10 @@ Event::Event(ModuleList modules,
              std::atomic<bool>& terminate,
              std::condition_variable& master_condition,
              std::map<Module*, long double>& module_execution_time,
-             std::mt19937_64& seeder)
+             std::mt19937_64& seeder,
+             Buffer& buffer)
     : number(event_num), modules_(std::move(modules)), terminate_(terminate), master_condition_(master_condition),
-      module_execution_time_(module_execution_time) {
+      module_execution_time_(module_execution_time), writer_buffer_(buffer) {
     random_engine_.seed(seeder());
 #ifndef NDEBUG
     // Ensure that the ID is unique
@@ -83,7 +86,7 @@ void Event::run_geant4() {
  * When a previous event has yet to write to file, the current event waits until it's its own turn to write.
  * No work is done while waiting.
  */
-void Event::handle_iomodule(const std::shared_ptr<Module>& module) {
+bool Event::handle_iomodule(const std::shared_ptr<Module>& module) {
     using namespace std::chrono_literals;
 
     const bool reader = dynamic_cast<ReaderModule*>(module.get()) != nullptr,
@@ -96,19 +99,34 @@ void Event::handle_iomodule(const std::shared_ptr<Module>& module) {
 
     if(!reader && !writer) {
         // Module doesn't require IO; nothing else to do
-        return;
+        return false;
     }
     LOG(DEBUG) << module->getUniqueName() << " is a " << (reader ? "reader" : "writer")
                << "; running in order of event number";
+
+    // Buffer writer modules if previous events have yet to be written to file.
+    if(writer && this->number > writer_lock_.current()) {
+        std::lock_guard<std::mutex> buffer_lock{buffer_mutex_};
+        LOG(TRACE) << "Previous events have yet to be written to file; buffering self";
+        writer_buffer_.emplace(this->number, [event = shared_from_this()]() { event->finalize(); });
+        buffer_size = writer_buffer_.size();
+
+        // Ensure the buffer is sorted in increasing order
+        assert(writer_buffer_.size() == 1 || writer_buffer_.cbegin()->first < (--writer_buffer_.cend())->first);
+
+        writer_lock_.next();
+        return true;
+    }
 
     // Acquire reader/writer lock
     auto& typelock = reader ? reader_lock_ : writer_lock_;
     auto lock = std::unique_lock<std::mutex>(typelock.mutex);
     // Check every 50ms if it's this event's turn to run
     // TODO [doc] don't pseudo-busy loop
-    while(!typelock.condition.wait_for(
-        lock, 50ms, [this, &typelock]() { return this->number == typelock.current_event.load(); })) {
+    while(!typelock.condition.wait_for(lock, 50ms, [this, &typelock]() { return this->number == typelock.current(); })) {
     };
+
+    return false;
 }
 
 Event* Event::with_context(const std::shared_ptr<Module>& module) {
@@ -122,9 +140,6 @@ Event* Event::with_context(const std::shared_ptr<Module>& module) {
  * Sets the section header and logging settings before exeuting the \ref Module::run() function.
  */
 void Event::run(std::shared_ptr<Module>& module) {
-    // Modules that read/write files must be run in order of event number
-    handle_iomodule(module);
-
     LOG_PROGRESS(TRACE, "EVENT_LOOP") << "Running event " << this->number << " [" << module->get_identifier().getUniqueName()
                                       << "]";
 
@@ -173,10 +188,29 @@ void Event::run(std::shared_ptr<Module>& module) {
 }
 
 void Event::run() {
-    for(auto& module : modules_) {
+    bool buffered = false;
+
+    while(!modules_.empty()) {
+        auto module = modules_.front();
+
+        // Modules that read/write files must be run in order of event number
+        buffered = handle_iomodule(module);
+        if(buffered) {
+            // Nothing else to do in this context
+            return;
+        }
+
         run(module);
+        modules_.pop_front();
     }
 
     // All writers have been run for this event, let the next event run its writers
     writer_lock_.next();
+}
+
+void Event::finalize() {
+    // Run the remaining modules (writers)
+    for(auto& module : modules_) {
+        run(module);
+    }
 }

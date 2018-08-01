@@ -24,7 +24,7 @@ namespace allpix {
      * Executes a single event, storing messages independent from other events.
      * Exposes an API for usage by the modules' \ref Module::run() "run functions".
      */
-    class Event {
+    class Event : public std::enable_shared_from_this<Event> {
         friend struct ConcreteEvent;
 
     public:
@@ -103,8 +103,14 @@ namespace allpix {
              * @brief Increment the current event and notify all waiting threads
              */
             void next() {
+                std::lock_guard<std::mutex> lock{mutex};
                 current_event++;
                 condition.notify_all();
+            }
+
+            unsigned int current() {
+                std::lock_guard<std::mutex> lock{mutex};
+                return current_event.load();
             }
         };
 
@@ -122,7 +128,8 @@ namespace allpix {
                        std::atomic<bool>& terminate,
                        std::condition_variable& master_condition,
                        std::map<Module*, long double>& module_execution_time,
-                       std::mt19937_64& seeder);
+                       std::mt19937_64& seeder,
+                       Buffer& buffer);
 
         /**
          * @brief Use default destructor
@@ -151,6 +158,8 @@ namespace allpix {
          */
         void run(std::shared_ptr<Module>& module);
 
+        void finalize();
+
         /**
          * @brief Handles the execution of modules requiring I/O operations
          * @param module The module to execute
@@ -160,7 +169,7 @@ namespace allpix {
          * this function in order of increasgin event number. This ensures that readers and writers run in the same order
          * between two same-configuration simulations.
          */
-        void handle_iomodule(const std::shared_ptr<Module>& module);
+        bool handle_iomodule(const std::shared_ptr<Module>& module);
 
         /**
          * @brief Changes the current context of the event to that of the given module
@@ -193,6 +202,11 @@ namespace allpix {
         // For module messages
         Messenger messenger_;
         Module* current_module_;
+
+        // Writer buffering
+        static std::mutex buffer_mutex_;
+        Buffer& writer_buffer_;
+        static volatile size_t buffer_size;
 
 #ifndef NDEBUG
         static std::set<unsigned int> unique_ids_;

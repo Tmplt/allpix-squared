@@ -28,6 +28,14 @@
 namespace allpix {
 
     using ModuleList = std::list<std::shared_ptr<Module>>;
+    using BufferPair = std::pair<const unsigned int, std::function<void(void)>>;
+
+    // Sort buffer after event number, in increasing order
+    // TODO [doc] name something that mirrors the type. It's not a buffer but a function queue
+    struct buffer_cmp {
+        bool operator()(const BufferPair& lhs, const BufferPair& rhs) const { return lhs.first < rhs.first; }
+    };
+    using Buffer = std::set<BufferPair, buffer_cmp>;
 
     class ConfigManager;
     class Messenger;
