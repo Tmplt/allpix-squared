@@ -59,10 +59,6 @@ namespace allpix {
          * @brief ROOT class definition
          */
         Pixel() = default;
-        /**
-         * @brief Default constructor for ROOT I/O
-         */
-        ClassDef(Pixel, 1);
 
     private:
         Pixel::Index index_;

@@ -92,10 +92,6 @@ namespace allpix {
         const MCTrack* getTrack() const;
 
         /**
-         * @brief ROOT class definition
-         */
-        ClassDefOverride(MCParticle, 5);
-        /**
          * @brief Default constructor for ROOT I/O
          */
         MCParticle() = default;
@@ -114,8 +110,8 @@ namespace allpix {
 
         int particle_id_{};
 
-        TRef parent_;
-        TRef track_;
+        Object* parent_;
+        Object* track_;
     };
 
     /**

@@ -64,10 +64,6 @@ namespace allpix {
         std::vector<const MCParticle*> getMCParticles() const;
 
         /**
-         * @brief ROOT class definition
-         */
-        ClassDefOverride(PixelCharge, 4);
-        /**
          * @brief Default constructor for ROOT I/O
          */
         PixelCharge() = default;
@@ -76,8 +72,8 @@ namespace allpix {
         Pixel pixel_;
         unsigned int charge_{};
 
-        std::vector<TRef> propagated_charges_;
-        std::vector<TRef> mc_particles_;
+        std::vector<Object*> propagated_charges_;
+        std::vector<Object*> mc_particles_;
     };
 
     /**

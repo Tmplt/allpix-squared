@@ -52,16 +52,12 @@ namespace allpix {
         void setMCParticle(const MCParticle* mc_particle);
 
         /**
-         * @brief ROOT class definition
-         */
-        ClassDefOverride(DepositedCharge, 2);
-        /**
          * @brief Default constructor for ROOT I/O
          */
         DepositedCharge() = default;
 
     private:
-        TRef mc_particle_;
+        Object* mc_particle_;
     };
 
     /**
