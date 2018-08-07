@@ -37,7 +37,7 @@ namespace allpix {
      * deposits are specific for a detector. The module also returns the information of the real particle passage (the
      * MCParticle).
      */
-    class DepositionGeant4Module : public Module {
+    class DepositionGeant4Module : public Geant4Module {
     public:
         /**
          * @brief Constructor for this unique module
@@ -50,7 +50,7 @@ namespace allpix {
         /**
          * @brief Initializes the physics list of processes and constructs the particle source
          */
-        void init(uint64_t) override;
+        void init(std::mt19937_64&) override;
 
         /**
          * @brief Deposit charges for a single event

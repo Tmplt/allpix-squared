@@ -124,7 +124,7 @@ namespace allpix {
          *
          * Does nothing if not overloaded.
          */
-        virtual void init(uint64_t random_seed) { (void)random_seed; }
+        virtual void init(std::mt19937_64& seeder) { (void)seeder; }
 
         /**
          * @brief Execute the function of the module for every event
@@ -225,6 +225,23 @@ namespace allpix {
     public:
         explicit ReaderModule(Configuration& config) : Module(config) {}
         explicit ReaderModule(Configuration& config, std::shared_ptr<Detector> detector)
+            : Module(config, std::move(detector)) {}
+    };
+
+    /**
+     * @brief Simple wrapper around Module to define a module that runs Geant4 code
+     * @warning All modules that runs Geant4 code in its \ref Module::run() "run function" must inherit from this class
+     *
+     * Used to figure out which modules must run on main thread.
+     */
+    class Geant4Module : public Module {
+        friend class Event;
+        friend class ModuleManager;
+        friend class Messenger;
+
+    public:
+        explicit Geant4Module(Configuration& config) : Module(config) {}
+        explicit Geant4Module(Configuration& config, std::shared_ptr<Detector> detector)
             : Module(config, std::move(detector)) {}
     };
 

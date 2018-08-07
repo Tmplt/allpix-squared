@@ -551,7 +551,7 @@ void ModuleManager::init(std::mt19937_64& seeder) {
         // Change to our ROOT directory
         module->getROOTDirectory()->cd();
         // Init module
-        module->init(seeder());
+        module->init(seeder);
         // Reset logging
         Log::setSection(old_section_name);
         set_module_after(old_settings);
@@ -615,8 +615,8 @@ void ModuleManager::run(std::mt19937_64& seeder) {
     std::unique_lock<std::mutex> lock{mutex};
     for(unsigned int i = 1; i <= number_of_events; i++) {
         // Don't initialize all events directly. That would take up too much memory.
-        // 4x thread_num should give us a sufficient buffer (meaning that workers should never end up idle).
-        // TODO: don't pseudo-busy loop here
+        // 4 x thread_num should give us a sufficient buffer (meaning that workers should never end up idle).
+        // TODO [doc] don't pseudo-busy loop here
         master_condition.wait_for(lock, 50ms, [&]() {
             thread_pool->check_exception();
             return thread_pool->queue_size() < threads_num * 4 || terminate_;
@@ -630,7 +630,7 @@ void ModuleManager::run(std::mt19937_64& seeder) {
         }
 
         // Create an event, initialize it, and submit it wrapped in a lambda to the thread pool
-        // TODO: make this a unique pointer
+        // TODO [doc] make this a unique pointer
         auto event =
             std::make_shared<ConcreteEvent>(modules_, i, terminate_, master_condition, module_execution_time_, seeder);
         // Event initialization must be done on the main thread

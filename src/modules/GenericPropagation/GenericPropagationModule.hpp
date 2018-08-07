@@ -51,7 +51,7 @@ namespace allpix {
         /**
          * @brief Initialize the module and check field configuration
          */
-        void init(uint64_t) override;
+        void init(std::mt19937_64&) override;
 
         /**
          * @brief Propagate all deposited charges through the sensor
@@ -91,7 +91,7 @@ namespace allpix {
         // Local copies of configuration parameters to avoid costly lookup:
         double temperature_{}, timestep_min_{}, timestep_max_{}, timestep_start_{}, integration_time_{},
             target_spatial_precision_{}, output_plots_step_{};
-        bool output_plots_{};
+        bool output_plots_{}, output_plots_lines_at_implants_{};
 
         // Precalculated values for electron and hole mobility
         double electron_Vm_;
@@ -116,9 +116,6 @@ namespace allpix {
         mutable unsigned int total_propagated_charges_{};
         mutable unsigned int total_steps_{};
         mutable long double total_time_{};
-
-        // Output plot for drift time
-        TH1D* drift_time_histo;
     };
 
 } // namespace allpix

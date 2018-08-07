@@ -47,24 +47,30 @@ using namespace allpix;
  * Includes the particle source point to the geometry using \ref GeometryManager::addPoint.
  */
 DepositionGeant4Module::DepositionGeant4Module(Configuration& config, Messenger* messenger, GeometryManager* geo_manager)
-    : Module(config), messenger_(messenger), geo_manager_(geo_manager), last_event_num_(1), run_manager_g4_(nullptr) {
+    : Geant4Module(config), messenger_(messenger), geo_manager_(geo_manager), last_event_num_(1), run_manager_g4_(nullptr) {
     // Create user limits for maximum step length in the sensor
     user_limits_ = std::make_unique<G4UserLimits>(config_.get<double>("max_step_length", Units::get(1.0, "um")));
 
     // Set default physics list
     config_.setDefault("physics_list", "FTFP_BERT_LIV");
 
+    config_.setDefault("source_type", "beam");
     config_.setDefault<bool>("output_plots", false);
     config_.setDefault<int>("output_plots_scale", Units::get(100, "ke"));
 
+    // Set alias for support of old particle source definition
+    config_.setAlias("source_position", "beam_position");
+    config_.setAlias("source_energy", "beam_energy");
+    config_.setAlias("source_energy_spread", "beam_energy_spread");
+
     // Add the particle source position to the geometry
-    geo_manager_->addPoint(config_.get<ROOT::Math::XYZPoint>("beam_position"));
+    geo_manager_->addPoint(config_.get<ROOT::Math::XYZPoint>("source_position"));
 }
 
 /**
  * Module depends on \ref GeometryBuilderGeant4Module loaded first, because it owns the pointer to the Geant4 run manager.
  */
-void DepositionGeant4Module::init(uint64_t random_seed) {
+void DepositionGeant4Module::init(std::mt19937_64& seeder) {
     // Load the G4 run manager (which is owned by the geometry builder)
     run_manager_g4_ = G4RunManager::GetRunManager();
     if(run_manager_g4_ == nullptr) {
@@ -255,7 +261,7 @@ void DepositionGeant4Module::init(uint64_t random_seed) {
     // NOTE Assumes this is the only Geant4 module using random numbers
     std::string seed_command = "/random/setSeeds ";
     for(int i = 0; i < G4_NUM_SEEDS; ++i) {
-        seed_command += std::to_string(static_cast<uint32_t>(random_seed % INT_MAX));
+        seed_command += std::to_string(static_cast<uint32_t>(seeder() % INT_MAX));
         if(i != G4_NUM_SEEDS - 1) {
             seed_command += " ";
         }

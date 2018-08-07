@@ -58,7 +58,7 @@ ProjectionPropagationModule::ProjectionPropagationModule(Configuration& config,
     config_.setDefault<bool>("ignore_magnetic_field", false);
 }
 
-void ProjectionPropagationModule::init(uint64_t) {
+void ProjectionPropagationModule::init(std::mt19937_64&) {
     if(detector_->getElectricFieldType() != ElectricFieldType::LINEAR) {
         throw ModuleError("This module should only be used with linear electric fields.");
     }
@@ -189,8 +189,12 @@ void ProjectionPropagationModule::run(Event* event) const {
             auto global_position = detector_->getGlobalPosition(local_position);
 
             // Produce charge carrier at this position
-            propagated_charges.emplace_back(
-                projected_position, global_position, deposit.getType(), charge_per_step, deposit.getEventTime(), &deposit);
+            propagated_charges.emplace_back(projected_position,
+                                            global_position,
+                                            deposit.getType(),
+                                            charge_per_step,
+                                            deposit.getEventTime() + drift_time,
+                                            &deposit);
 
             LOG(DEBUG) << "Propagated " << charge_per_step << " charge carriers (" << type << ") to "
                        << Units::display(projected_position, {"mm", "um"});
